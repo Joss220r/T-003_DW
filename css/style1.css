@@ -1,0 +1,102 @@
+:root{
+  --primario:#5a3dba;
+  --secundario:#9c6eff;
+  --acento:#ffd700;
+  --fondo:#f1efff;
+  --texto-principal:#1e1a30;
+}
+
+/* ---------- GENERALES ---------- */
+*{ box-sizing:border-box; }
+
+body{
+  font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+  margin:0;
+  padding:0 10px;
+  background:var(--fondo);
+  text-align:center;
+}
+
+/* ---------- NAVBAR ---------- */
+.navbar-main{
+  display:flex;
+  align-items:center;
+  background:linear-gradient(90deg,var(--primario),var(--secundario));
+  padding:8px 1rem;           /* alto reducido + márgenes laterales */
+  box-shadow:0 2px 5px rgba(0,0,0,.2);
+  position:relative;
+}
+
+.navbar-main a{
+  color:#fff;
+  text-decoration:none;
+  font-weight:500;
+}
+
+.navbar-main a:hover{ color:var(--acento); }
+
+/* ---------- BOTÓN CARRITO ---------- */
+.btn-cart{
+  background:none;
+  border:none;
+  cursor:pointer;
+  color:#fff;
+}
+
+.icon-cart{
+  width:28px;
+  height:28px;
+}
+
+.badge-count{
+  position:absolute;
+  top:-6px;
+  right:-10px;
+  background:#dc3545;
+  color:#fff;
+  font-size:.65rem;
+  padding:2px 6px;
+  border-radius:50%;
+  font-weight:600;
+}
+
+/* ---------- CAJAS BLANCAS ---------- */
+.content-box{
+  width:100%;
+  max-width:900px;
+  margin:50px auto;
+  background:#fff;
+  padding:40px 30px;
+  border-radius:16px;
+  box-shadow:0 0 15px rgba(90,61,186,.2);
+}
+
+/* ---------- CATEGORÍAS ---------- */
+.categoria{
+  background:var(--secundario);
+  color:#fff;
+  padding:12px;
+  border:none;
+  border-radius:12px;
+  font-weight:bold;
+  transition:background .3s;
+}
+.categoria:hover{ background:var(--primario); }
+
+
+/* ---------- CARRUSEL ---------- */
+.carousel-item img.banner{
+  height:250px;
+  object-fit:cover;
+}
+
+/* ---------- MEDIA QUERY ---------- */
+@media(max-width:480px){
+  .navbar-main a{ font-size:14px; }
+  h1{ font-size:24px; }
+  p{ font-size:16px; }
+}
+
+.categoria.active{
+  background: var(--primario);
+}
