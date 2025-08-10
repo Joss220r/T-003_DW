@@ -89,100 +89,79 @@
     });
   </script>
 
-  <script>
-  (async () => {
-    const url = "https://backcvbgtmdesa.azurewebsites.net/api/productos";
-    const contenedor = document.getElementById("contenedor-productos");
-    const contCat = document.getElementById("contenedor-categorias");
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const API = "https://backcvbgtmdesa.azurewebsites.net/api/productos";
+  const contCats = document.getElementById('contenedor-categorias');
+  const contProd = document.getElementById('contenedor-productos');
+  const baseUrl  = location.origin + location.pathname;
 
-    const escapeHtml = s => String(s ?? "").replace(/[&<>"']/g, m => (
-      {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]
-    ));
-    const getCategoria = p =>
-      p?.Categoria?.Nombre ?? p?.CategoriaNombre ?? p?.Categoria ?? p?.categoriaNombre ?? p?.categoria ?? "Otros";
+  const catIdOf   = p => p.CategoriaId ?? p.categoriaId ?? p.IdCategoria ?? p.idCategoria ?? null;
+  const catNameOf = p => p?.Categoria?.Nombre ?? p?.CategoriaNombre ?? p?.Categoria ?? ("Categoría " + (catIdOf(p) ?? ""));
 
-    contenedor.innerHTML = `
-      <div class="col-12"><div class="alert alert-info">Cargando productos...</div></div>`;
+  contProd.innerHTML = '<div class="col-12"><div class="alert alert-info">Cargando...</div></div>';
 
-    try {
-      const resp = await fetch(url, { headers: { "Accept": "application/json" } });
-      if (!resp.ok) throw new Error("HTTP " + resp.status);
-      const productos = await resp.json();
+  try {
+    const res = await fetch(API);
+    if (!res.ok) throw new Error();
+    const productos = await res.json();
 
-      if (!Array.isArray(productos) || productos.length === 0) {
-        contenedor.innerHTML = `
-          <div class="col-12"><div class="alert alert-warning">No hay productos para mostrar.</div></div>`;
-        if (contCat) contCat.innerHTML = "";
-        return;
-      }
+    const sel = new URLSearchParams(location.search).get('codCat') ? Number(new URLSearchParams(location.search).get('codCat')) : null;
 
-      const cats = new Set();
-      let html = "";
+    const mapa = new Map();
+    productos.forEach(p => { const id = catIdOf(p); if (id != null && !mapa.has(id)) mapa.set(id, catNameOf(p)); });
 
-      for (const p of productos) {
-        const cat = getCategoria(p) || "Otros";
-        cats.add(cat);
+    let html = `<li><button type="button" class="categoria w-100 py-3 mb-3 ${sel==null?'active':''}" data-id="">Todos</button></li>`;
+    for (const [id, nombre] of mapa.entries()) {
+      html += `<li><button type="button" class="categoria w-100 py-3 mb-3 ${sel===Number(id)?'active':''}" data-id="${id}">${nombre}</button></li>`;
+    }
+    contCats.innerHTML = html;
 
+    const render = (catId) => {
+      const lista = catId==null ? productos : productos.filter(p => Number(catIdOf(p)) === catId);
+      contProd.innerHTML = lista.map(p => {
         const enOferta = p.EnOferta && p.PrecioOferta != null;
-        const precioHTML = enOferta
+        const precio = enOferta
           ? `<span class="text-danger">$${parseFloat(p.PrecioOferta).toFixed(2)}</span>
              <small class="text-muted text-decoration-line-through ms-1">$${parseFloat(p.Precio).toFixed(2)}</small>`
           : `$${parseFloat(p.Precio).toFixed(2)}`;
-
-        html += `
-          <div class="col-sm-12 col-md-4 mb-4" data-cat="${escapeHtml(cat)}">
+        return `
+          <div class="col-sm-12 col-md-4 mb-4">
             <div class="card h-100">
-              <img src="${p.Imagen}" class="card-img-top img-fluid" alt="${escapeHtml(p.Nombre || 'Producto')}" />
+              <img src="${p.Imagen}" class="card-img-top img-fluid" alt="${p.Nombre||'Producto'}">
               <div class="card-body d-flex flex-column">
-                <h6 class="card-title">${escapeHtml(p.Nombre ?? '')}</h6>
-                <p class="card-text small mb-2">${escapeHtml(p.Descripcion ?? '')}</p>
-                <p class="fw-bold mb-3">${precioHTML}</p>
+                <h6 class="card-title">${p.Nombre||''}</h6>
+                <p class="card-text small mb-2">${p.Descripcion||''}</p>
+                <p class="fw-bold mb-3">${precio}</p>
                 <button class="btn btn-primary mt-auto agregar-carrito">Agregar al carrito</button>
               </div>
             </div>
           </div>`;
-      }
-      contenedor.innerHTML = html;
+      }).join('');
+    };
+    render(sel);
 
-      if (contCat) {
-        let chtml = `
-          <li><button type="button" class="categoria w-100 py-3 mb-3 active" data-filter="todos">Todos</button></li>`;
-        [...cats].sort((a,b)=>a.localeCompare(b)).forEach(c => {
-          const safe = escapeHtml(c);
-          chtml += `<li><button type="button" class="categoria w-100 py-3 mb-3" data-filter="${safe}">${safe}</button></li>`;
-        });
-        contCat.innerHTML = chtml;
+    contCats.addEventListener('click', e => {
+      const btn = e.target.closest('button.categoria');
+      if (!btn) return;
+      const id = btn.dataset.id ? Number(btn.dataset.id) : null;
+      window.location.href = id==null ? baseUrl : `${baseUrl}?codCat=${id}`;
+    });
 
-        contCat.addEventListener("click", (e) => {
-          const btn = e.target.closest("[data-filter]");
-          if (!btn) return;
+    const btnBorrar = document.getElementById('btn-borrar-filtro');
+    if (btnBorrar) btnBorrar.addEventListener('click', () => window.location.href = baseUrl);
 
-          contCat.querySelectorAll(".categoria").forEach(b => b.classList.toggle("active", b === btn));
+  } catch {
+    contProd.innerHTML = '<div class="col-12"><div class="alert alert-danger">No se pudieron cargar los productos.</div></div>';
+    contCats.innerHTML = `<li><button class="categoria w-100 py-3 mb-3" disabled>Categorías no disponibles</button></li>`;
+  }
+});
+</script>
 
-          const filtro = btn.dataset.filter;
-          document.querySelectorAll("#contenedor-productos [data-cat]").forEach(card => {
-            const show = (filtro === "todos" || card.dataset.cat === filtro);
-            card.classList.toggle("d-none", !show);
-          });
-        });
 
-        const btnBorrar = document.getElementById("btn-borrar-filtro");
-        if (btnBorrar) {
-          btnBorrar.addEventListener("click", () => {
-            const btnTodos = contCat.querySelector('[data-filter="todos"]');
-            if (btnTodos) btnTodos.click();
-          });
-        }
-      }
-    } catch (err) {
-      console.error("Error al cargar productos:", err);
-      contenedor.innerHTML = `
-        <div class="col-12"><div class="alert alert-danger">No se pudieron cargar los productos.</div></div>`;
-      if (contCat) {
-        contCat.innerHTML = `<li><button class="categoria w-100 py-3 mb-3" disabled>Categorías no disponibles</button></li>`;
-      }
-    }
-  })();
-  </script>
+
+
+
+
 </body>
 </html>
